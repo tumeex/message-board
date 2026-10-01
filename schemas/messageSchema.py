@@ -1,6 +1,7 @@
 def individual_serial(todo) -> dict:
     return {
         "id": str(todo["_id"]),
+        "test-id": todo["id"],
         "text": todo["text"],
         "sender": todo["sender"],
         "timestamp": todo["timestamp"]

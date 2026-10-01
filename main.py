@@ -1,11 +1,23 @@
 from fastapi import FastAPI, HTTPException
 #from pydantic import BaseModel
 from routers import userRouter, messageBoardRouter, messageRouter
+from contextlib import asynccontextmanager
+from config import db
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Verify connection when the application starts
+    await db.clientAsync.admin.command("ping")
+    print("Connected to MongoDB")
+    yield
+    # Close connection when the application stops
+    await db.clientAsync.close()
 
 app = FastAPI(
     title="Message Board",
     description="This is description",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan
 )
 
 app.include_router(userRouter.router)
@@ -34,5 +46,5 @@ mboards = [mboard1, mboard2, mboard3]
 """
 
 @app.get("/")
-async def root(): 
+async def root():
     return {"Hello": "World"}
