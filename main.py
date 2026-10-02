@@ -19,10 +19,24 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan
 )
+"""
+@app.on_event("startup")
+def startup_event():
+    # Create db and tables
+    print("App started")
+@app.on_event("shutdown")
+def shutdown_event():
+    # Delete db and tables
+    print("App ended")
+"""
 
 app.include_router(userRouter.router)
 app.include_router(messageBoardRouter.router)
 app.include_router(messageRouter.router)
+
+@app.get("/")
+async def root():
+    return {"Hello": "World"}
 
 """
 class Message(BaseModel):
@@ -44,7 +58,3 @@ mboard3 = MessageBoard(id=3, name="Board3", messages=[mess2, mess3])
 
 mboards = [mboard1, mboard2, mboard3]
 """
-
-@app.get("/")
-async def root():
-    return {"Hello": "World"}
