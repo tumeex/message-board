@@ -1,8 +1,7 @@
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
-from config import db
+from config.dbPostgres import db, getTime
 from .connection_manager import manager
 from fastapi.responses import HTMLResponse
-from schemas.messageSchema import list_of_serials
 from views.message import m_html
 
 from models.message import Message
@@ -10,21 +9,23 @@ from models.messageBoard import MessageBoard
 
 router = APIRouter()
 
-@router.websocket("/ws/recordMessage")
-async def websocket_endpoint(websocket: WebSocket, client_id: str):
-
+@router.websocket("/ws/welcome")
+async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
+    # Let everyone know a new user joined
+    time = await getTime()
+    await manager.broadcast(f"{time}: New client joined the waiting room")
     try:
         while True:
             data = await websocket.receive_text()
-            client_id = data.split(",")[0]
-            message = data.split(",")[1]
-            newMessage = Message({"text":message, "sender":client_id})
-            # Upload to DB
-            await create_message(newMessage)
+            # Broadcast the message to all clients
+            await manager.broadcast(f"{data}")
     except WebSocketDisconnect:
+        print("Visitor closed")
         manager.disconnect(websocket)
-
+        await manager.broadcast(f"Visitor left the chat")
+    finally:
+        print("Visitor WS finally ended")
 
 
 # Async REST--------------------------------------------------------------------
@@ -34,28 +35,25 @@ async def get():
 
 @router.get("/messages")
 async def return_messages():
-        mboards = db.message_col_async.find({}, {"_id": 0})
-        return await mboards.to_list()
+    return await db.return_messages()
+
+@router.get("/messages/{message_id}")
+async def return_message(message_id: int):
+    message = db.message_col_async.find_one({"id": message_id}, {"_id": 0})
+    return await message
 
 @router.post("/messages/add")
 async def create_message(message: Message):
     print("Received message/add")
-    await db.message_col_async.insert_one(dict(message))
-    print("Allright still")
-    return {"info": "Inserted successfully"}
-
-@router.get("/messages/{message_id}")
-async def return_message(message_id: str):
-    message = db.message_col_async.find_one({"id": message_id}, {"_id": 0})
-    return await message
+    return await db.create_message(message)
 
 @router.get("/messages/user/{user_id}")
-async def return_message(user_id: str):
+async def return_userMessages(user_id: int):
     messages = db.message_col_async.find({"sender": user_id}, {"_id": 0})
     return await messages.to_list()
 
 @router.delete("/messages/{message_id}")
-async def delete_message(message_id: str):
+async def delete_message(message_id: int):
     db.message_col.delete_one({"id": message_id})
     return {"info": "Deleted successfully"}
 

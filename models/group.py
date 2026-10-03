@@ -1,7 +1,8 @@
 from pydantic import BaseModel
-from .user import User
 
 class Group(BaseModel):
-    id: str = None
-    name: str = None
-    members: list[str] = None       # user IDs
+    id: int = 0
+    name: str = "Nameless"
+    members: list[int] = [0]       # user IDs
+    async def toSql(self):
+        return "'{self.name}', '{self.members}', '{self.owner}'"

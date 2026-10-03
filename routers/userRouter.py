@@ -1,8 +1,7 @@
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
-from config import db
+from config.dbPostgres import db
 from .connection_manager import manager
 from fastapi.responses import HTMLResponse
-from schemas.userSchema import list_of_serials
 from views.user import u_html
 
 from models.message import Message
@@ -11,6 +10,7 @@ from models.user import User
 
 router = APIRouter()
 
+"""
 @router.websocket("/ws/getUserName/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str):
 
@@ -23,7 +23,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
             await websocket.send_text(f"{sendData["name"]}")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-
+"""
 
 
 # Async REST--------------------------------------------------------------------
@@ -32,20 +32,27 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
 async def get():
     return HTMLResponse(u_html)
 
-@router.get("users")
+@router.get("/users")
 async def return_users():
-    users = db.user_col_async.find({}, {"_id": 0})
-    return await users.to_list()
+    return await db.return_users()
 
-@router.get("/users/{user_id}")
-async def return_user(user_id: str):
-    user = db.user_col_async.find_one({"id": user_id}, {"_id": 0})
-    return await user
+@router.get("/user/{user_id}")
+async def return_userById(user_id: int):
+    return await db.return_userById(user_id)
+
+@router.get("/user/{user_id}")
+async def return_userByName(user_name: str):
+    return await db.return_userByName(user_name)
 
 @router.post("/users/add")
 async def create_messageBoard(mboard: MessageBoard):
     db.user_col_async.insert_one(dict(mboard))
     return {"info": "Inserted successfully"}
+
+@router.post("/users/login/{mboard_id}/{user}")
+async def join_user(mboard_id: str, user: str):
+    #await db.login_user(mboard_id, user)
+    return await db.login_user(mboard_id, user)
 
 @router.get("/users/add/addTest")
 async def create_messageBoardTest():

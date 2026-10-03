@@ -2,16 +2,16 @@ from fastapi import FastAPI, HTTPException
 #from pydantic import BaseModel
 from routers import userRouter, messageBoardRouter, messageRouter
 from contextlib import asynccontextmanager
-from config import db
+from config.dbPostgres import db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Verify connection when the application starts
-    await db.clientAsync.admin.command("ping")
-    print("Connected to MongoDB")
+    await db.connect()
+    print("Connected to Postgres")
     yield
     # Close connection when the application stops
-    await db.clientAsync.close()
+    await db.disconnect()
 
 app = FastAPI(
     title="Message Board",

@@ -21,11 +21,10 @@ mb_html = """
         <h1>WebSocket Chat</h1>
         <div class="container">
             <div>
-                <p>User</p>
+                <p>Join</p>
                 <form action="" onsubmit="sendMessage(event)">
-                    <input type="text" id="senderId" autocomplete="off" placeholder="user id" required=true/>
+                    <input type="text" id="senderName" autocomplete="off" placeholder="user name" required=true/>
                     <input type="text" id="messageBoard" autocomplete="off" placeholder="board id" required=true/>
-                    <input type="text" id="messageText" autocomplete="off" placeholder="text" required=true/>
                     <button>Send</button>
                 </form>
             </div>
@@ -52,7 +51,8 @@ mb_html = """
             var mboard = document.getElementById("messageBoard")
             var input = document.getElementById("messageText")
             var timestamp = new Date().toISOString().slice(0, 19);
-            data = ""+mboard.value+","+id.value+","+input.value+","+timestamp;
+            data = mboard.value+":::"+id.value+":::"+input.value+":::"+timestamp;
+            console.log("Data: "+data)
             ws.send(data)
             input.value = ''
             event.preventDefault()
